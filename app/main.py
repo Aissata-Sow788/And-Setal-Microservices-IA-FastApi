@@ -4,31 +4,31 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.core.config import settings
-from app.services.ia_service import classer_image
+from app.services.ia_service import classer_image  # Changé en ia_services (avec s)
 
-# Préchauffage du modèle IA au démarrage (évite le lag au premier appel)
+# Préchauffage du modèle IA au démarrage
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    classer_image()  # Charge le modèle en mémoire RAM/GPU dès le démarrage
+    classer_image()  # Charge le modèle en mémoire dès le démarrage
     yield
-    # Nettoyage si nécessaire à la fermeture
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="Microservice IA pour l'analyse des signalements",
-    lifespan=lifespan  # Ajout du cycle de vie
+    lifespan=lifespan
 )
 
-# Configuration CORS essentielle pour le Frontend
+# Configuration CORS pour le Frontend et Django
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # À restreindre en production (ex: ["https://monfront.com"])
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Inclusion propre du routeur (le préfixe est géré directement ici)
 app.include_router(
     router,
     prefix="/api/ia",
@@ -42,10 +42,3 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-from fastapi import UploadFile, File
-
-@app.post("/api/ia/analyse", tags=["IA Force"])
-async def analyser_ia_force(image: UploadFile = File(...)):
-    return {"message": "Route forcee en direct depuis main.py"}
-
