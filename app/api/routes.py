@@ -1,31 +1,21 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from app.services.ia_service import analyser_image  # Correction du nom de fichier
+from app.services.ia_service import analyser_image
 from app.shemas.prediction import AnalyseResponse
 
-router = APIRouter(
-    # prefix="/api/ia",
-    # tags=["IA"]
-)
+# On crée le routeur sans préfixe pour éviter les doublons (ex: /api/ia/api/ia/analyse)
+router = APIRouter()
 
-# Limite stricte de taille : 10 Mo (10 * 1024 * 1024 octets)
-MAX_FILE_SIZE = 10_485_760 
+MAX_FILE_SIZE = 10_485_760  # 10 Mo
 
 @router.post("/analyse", response_model=AnalyseResponse)
 async def analyser(image: UploadFile = File(...)):
 
-    if not image.content_type:
+    if not image.content_type or not image.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
-            detail="Type de fichier inconnu."
+            detail="Le fichier doit être une image valide."
         )
 
-    if not image.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail="Le fichier doit être une image."
-        )
-
-    # Sécurité : Vérification de la taille du fichier avant la lecture complète
     if image.size and image.size > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
@@ -35,9 +25,8 @@ async def analyser(image: UploadFile = File(...)):
     image_bytes = await image.read()
 
     try:
+        # Appel du vrai service IA avec le dictionnaire d'urgence dynamique
         resultat = analyser_image(image_bytes)
-        
-        # Le dictionnaire renvoyé respecte parfaitement les champs requis par AnalyseResponse
         return resultat
 
     except ValueError as e:
