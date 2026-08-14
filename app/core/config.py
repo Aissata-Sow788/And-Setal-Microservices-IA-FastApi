@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # RECOMMANDATION DE SÉCURITÉ : Valeur de secours pour éviter un crash au démarrage
-    MODEL_NAME: str = "kendrickfff/my_resnet50_garbage_classificationv1.2" 
+    MODEL_NAME: str = "yangy50/garbage-classification" 
 
     # Configuration interne du comportement de Pydantic
     model_config = SettingsConfigDict(
